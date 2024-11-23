@@ -1,0 +1,10 @@
+commit 38055f5e6de3c04e54a706a0eb2f8db8748063d1
+Author: Tom Henderson <tomh@tomh.org>
+Date:   Thu Sep 12 11:42:15 2024 +0530
+
+    tcp: Prevent DupAck classification on segments with data
+    
+    Credits to Neal Cardwell for finding the issue.
+
+src/internet/model/tcp-socket-base.cc
+src/internet/model/tcp-socket-base.h
