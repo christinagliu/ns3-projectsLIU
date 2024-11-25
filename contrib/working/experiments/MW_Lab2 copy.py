@@ -197,150 +197,6 @@ def P1b(results_dir, run=True):
     
     return
 
-def P2a(results_dir, run=True):
-    '''Two analyses for Part II: 
-        P2a -- Studying Delay with Assymetric Link conditions (MCS)
-        P2b -- Studying Delay with Assymetric Link conditions (Bandwidth)
-
-        If run=False, only plots most recent data file without running a new sim
-    '''
-    os.system("echo 'Testing Link Assymetry with different MCS'")
-    #Experiment constants
-    rng_run = seed
-    simulation_time = 20    #Seconds
-    payload_size = 1500     #Bytes
-    mcs = 6
-    channel_width = 20      #MHz
-    cw_min = 16             #Min time steps in cw
-    n_sta = 5
-
-    #Variable
-    lambdas = [10 ** n for n in np.arange(-4.0, 0, 0.5)]     #Creates range of lambda from 10^-4 to 10^-1
-    mcs2s = [2, 4, 8]
-
-    #Run experiment in parallel
-    processes = []
-    #Process names for reference
-    names = []
-    thread_counter = 0
-    for mcs2 in mcs2s:
-        for l in lambdas:
-            command = (f'./ns3 run "single-bss-mld --rngRun={rng_run} '
-            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l}'
-            f'--mcs={mcs} --mcs2={mcs2}"')
-            print(f'Executing Command: {command}')
-
-            p = multiprocessing.Process(target=runNs3Cmd, args=(command,))
-            p.start()
-            processes.append(p)
-    
-    #Synchronize threads
-    for p in processes:
-        p.join()
-        
-    #Move Experiment files to results directory
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dir = os.path.join(results_dir, "P2a", timestamp)
-    os.makedirs(dir, exist_ok=True)
-    os.system(f'mv wifi-mld.dat {dir}')
-
-    #Plot results
-    # data = np.loadtxt(dir+'/wifi-mld.dat', delimiter=',')
-    # x = np.sort(data[:,29])             # Lambda
-    # mean_throughputL1 = data[:,3]       # MLD Throughput Link 1
-    # mean_throughputL2 = data[:,4]       # MLD Throughput Link 2
-    # mean_throughputAgg = data[:,5]       # MLD Throughput Aggregated
-    # n_slds = data[:,28]                  # Num. SLDs
-    
-    # plt.figure()
-
-    # colors = plt.cm.plasma(np.linspace(0, 1, len(n_slds)))
-    # for idx, n in enumerate(n_slds):
-    #     subset = n_slds == n
-    #     plt.plot(x[subset], mean_throughputL1[subset], label=f'Link I -- nSLD={n}', color=colors[idx])
-    #     plt.plot(x[subset], mean_throughputL2[subset], label=f'Link II -- nSLD={n}', color=colors[idx])
-    #     plt.plot(x[subset], mean_throughputAgg[subset], label=f'Aggregate -- nSLD={n}', color=colors[idx])
-
-    # plt.legend()
-    # plt.xlabel("Offered Load (Arrival Rate)")
-    # plt.ylabel("Mean MLD Throughput (Mbps)")
-    # plt.title("Througput Saturation vs. Lambda for varying number of SLDs")
-    # plt.savefig(dir+'/plot.png', format='png', dpi=300)
-    
-    return
-
-def P2b(results_dir, run=True):
-    '''Two analyses for Part II: 
-        P2a -- Studying Delay with Assymetric Link conditions (MCS)
-        P2b -- Studying Delay with Assymetric Link conditions (Bandwidth)
-
-        If run=False, only plots most recent data file without running a new sim
-    '''
-    os.system("echo 'Testing Link Assymetry with different Bandwidths'")
-    #Experiment constants
-    rng_run = seed
-    simulation_time = 20    #Seconds
-    payload_size = 1500     #Bytes
-    channel_width = 20      #MHz
-    cw_min = 16             #Min time steps in cw
-    n_sta = 5
-
-    #Variable
-    lambdas = [10 ** n for n in np.arange(-4.0, 0, 0.5)]    #Creates range of lambda from 10^-4 to 10^-1
-    channel_width2s = [40, 80]                             #MHz
-
-    #Run experiment in parallel
-    processes = []
-    #Process names for reference
-    names = []
-    thread_counter = 0
-    for channel_width2 in channel_width2s:
-        for l in lambdas:
-            command = (f'./ns3 run "single-bss-mld --rngRun={rng_run} '
-            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l}'
-            f'--channelWidth={channel_width} --channelWidth2={channel_width2}"')
-            print(f'Executing Command: {command}')
-
-            p = multiprocessing.Process(target=runNs3Cmd, args=(command,))
-            p.start()
-            processes.append(p)
-    
-    #Synchronize threads
-    for p in processes:
-        p.join()
-        
-    #Move Experiment files to results directory
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    dir = os.path.join(results_dir, "P2b", timestamp)
-    os.makedirs(dir, exist_ok=True)
-    os.system(f'mv wifi-mld.dat {dir}')
-
-    #Plot results
-    # data = np.loadtxt(dir+'/wifi-mld.dat', delimiter=',')
-    # x = np.sort(data[:,29])             # Lambda
-    # mean_throughputL1 = data[:,3]       # MLD Throughput Link 1
-    # mean_throughputL2 = data[:,4]       # MLD Throughput Link 2
-    # mean_throughputAgg = data[:,5]       # MLD Throughput Aggregated
-    # n_slds = data[:,28]                  # Num. SLDs
-    
-    # plt.figure()
-
-    # colors = plt.cm.plasma(np.linspace(0, 1, len(n_slds)))
-    # for idx, n in enumerate(n_slds):
-    #     subset = n_slds == n
-    #     plt.plot(x[subset], mean_throughputL1[subset], label=f'Link I -- nSLD={n}', color=colors[idx])
-    #     plt.plot(x[subset], mean_throughputL2[subset], label=f'Link II -- nSLD={n}', color=colors[idx])
-    #     plt.plot(x[subset], mean_throughputAgg[subset], label=f'Aggregate -- nSLD={n}', color=colors[idx])
-
-    # plt.legend()
-    # plt.xlabel("Offered Load (Arrival Rate)")
-    # plt.ylabel("Mean MLD Throughput (Mbps)")
-    # plt.title("Througput Saturation vs. Lambda for varying number of SLDs")
-    # plt.savefig(dir+'/plot.png', format='png', dpi=300)
-    
-    return
-
-
 def main():
     current_dir = os.getcwd()
     #Make results directory
@@ -370,15 +226,9 @@ def main():
         P1a(results_dir)
     elif(experiment == "P1b"):
         P1b(results_dir)
-    elif(experiment == "P2a"):
-        P2a(results_dir)
-    elif(experiment == "P2b"):
-        P2b(results_dir)
     elif(experiment == "ALL"):
-        # P1a(results_dir)
-        # P1b(results_dir)
-        P2a(results_dir)
-        P2b(results_dir)
+        P1a(results_dir)
+        P1b(results_dir)
     else:
         os.system("echo 'Invalid experiment selection'")
         os.system("echo 'Program terminated'")
