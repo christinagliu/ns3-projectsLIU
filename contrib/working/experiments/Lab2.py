@@ -340,6 +340,150 @@ def P2b(results_dir, run=True):
     
     return
 
+def P3a(results_dir, run=True):
+    '''Two analyses for Part III: 
+        P3a -- Maximizing throughput with varied link probability, MCS 
+        P3b -- Minimize E2E delay with varied link probability, Bandwidth
+
+        If run=False, only plots most recent data file without running a new sim
+    '''
+    os.system("echo 'Testing Throughput against Link Probability and MCS'")
+    #Experiment constants
+    rng_run = seed
+    simulation_time = 20    #Seconds
+    payload_size = 1500     #Bytes
+    channel_width = 20      #MHz
+    cw_min = 16             #Min time steps in cw
+    n_sta = 5
+    l = 10**-1         #Saturates network
+    mcs = 6
+
+    #Variable
+    mcs2s = [2, 4, 8]
+    mld_probL1s = [n for n in np.arange(0,1,0.1)]
+
+    #Run experiment in parallel
+    processes = []
+    #Process names for reference
+    names = []
+    thread_counter = 0
+    for mcs2 in mcs2s:
+        for mld_probL1 in mld_probL1s:
+            command = (f'./ns3 run "single-bss-mld --rngRun={rng_run} '
+            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l}'
+            f'--mcs={mcs} --mcs2={mcs2} --mldProbLink1={mld_probL1}"')
+            print(f'Executing Command: {command}')
+
+            p = multiprocessing.Process(target=runNs3Cmd, args=(command,))
+            p.start()
+            processes.append(p)
+    
+    #Synchronize threads
+    for p in processes:
+        p.join()
+        
+    #Move Experiment files to results directory
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    dir = os.path.join(results_dir, "P3a", timestamp)
+    os.makedirs(dir, exist_ok=True)
+    os.system(f'mv wifi-mld.dat {dir}')
+
+    #Plot results
+    # data = np.loadtxt(dir+'/wifi-mld.dat', delimiter=',')
+    # x = np.sort(data[:,29])             # Lambda
+    # mean_throughputL1 = data[:,3]       # MLD Throughput Link 1
+    # mean_throughputL2 = data[:,4]       # MLD Throughput Link 2
+    # mean_throughputAgg = data[:,5]       # MLD Throughput Aggregated
+    # n_slds = data[:,28]                  # Num. SLDs
+    
+    # plt.figure()
+
+    # colors = plt.cm.plasma(np.linspace(0, 1, len(n_slds)))
+    # for idx, n in enumerate(n_slds):
+    #     subset = n_slds == n
+    #     plt.plot(x[subset], mean_throughputL1[subset], label=f'Link I -- nSLD={n}', color=colors[idx])
+    #     plt.plot(x[subset], mean_throughputL2[subset], label=f'Link II -- nSLD={n}', color=colors[idx])
+    #     plt.plot(x[subset], mean_throughputAgg[subset], label=f'Aggregate -- nSLD={n}', color=colors[idx])
+
+    # plt.legend()
+    # plt.xlabel("Offered Load (Arrival Rate)")
+    # plt.ylabel("Mean MLD Throughput (Mbps)")
+    # plt.title("Througput Saturation vs. Lambda for varying number of SLDs")
+    # plt.savefig(dir+'/plot.png', format='png', dpi=300)
+    
+    return
+
+def P3b(results_dir, run=True):
+    '''Two analyses for Part III: 
+        P3a -- Maximizing throughput with varied link probability, MCS 
+        P3b -- Minimize E2E delay with varied link probability, Bandwidth
+
+        If run=False, only plots most recent data file without running a new sim
+    '''
+    os.system("echo 'Testing E2E Latency against Link Probability and Bandwidth'")
+    #Experiment constants
+    rng_run = seed
+    simulation_time = 20    #Seconds
+    payload_size = 1500     #Bytes
+    channel_width = 20      #MHz
+    cw_min = 16             #Min time steps in cw
+    n_sta = 5
+    l = 10**-2    
+
+    #Variable
+    channel_width2s = [40, 80]       #MHz
+    mld_probL1s = [n for n in np.arange(0,1,0.1)]
+
+    #Run experiment in parallel
+    processes = []
+    #Process names for reference
+    names = []
+    thread_counter = 0
+    for channel_width2 in channel_width2s:
+        for mld_probL1 in mld_probL1s:
+            command = (f'./ns3 run "single-bss-mld --rngRun={rng_run} '
+            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l}'
+            f'--channelWidth={channel_width} --channelWidth2={channel_width2} --mldProbLink1={mld_probL1}"')
+            print(f'Executing Command: {command}')
+
+            p = multiprocessing.Process(target=runNs3Cmd, args=(command,))
+            p.start()
+            processes.append(p)
+    
+    #Synchronize threads
+    for p in processes:
+        p.join()
+        
+    #Move Experiment files to results directory
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    dir = os.path.join(results_dir, "P3b", timestamp)
+    os.makedirs(dir, exist_ok=True)
+    os.system(f'mv wifi-mld.dat {dir}')
+
+    #Plot results
+    # data = np.loadtxt(dir+'/wifi-mld.dat', delimiter=',')
+    # x = np.sort(data[:,29])             # Lambda
+    # mean_throughputL1 = data[:,3]       # MLD Throughput Link 1
+    # mean_throughputL2 = data[:,4]       # MLD Throughput Link 2
+    # mean_throughputAgg = data[:,5]       # MLD Throughput Aggregated
+    # n_slds = data[:,28]                  # Num. SLDs
+    
+    # plt.figure()
+
+    # colors = plt.cm.plasma(np.linspace(0, 1, len(n_slds)))
+    # for idx, n in enumerate(n_slds):
+    #     subset = n_slds == n
+    #     plt.plot(x[subset], mean_throughputL1[subset], label=f'Link I -- nSLD={n}', color=colors[idx])
+    #     plt.plot(x[subset], mean_throughputL2[subset], label=f'Link II -- nSLD={n}', color=colors[idx])
+    #     plt.plot(x[subset], mean_throughputAgg[subset], label=f'Aggregate -- nSLD={n}', color=colors[idx])
+
+    # plt.legend()
+    # plt.xlabel("Offered Load (Arrival Rate)")
+    # plt.ylabel("Mean MLD Throughput (Mbps)")
+    # plt.title("Througput Saturation vs. Lambda for varying number of SLDs")
+    # plt.savefig(dir+'/plot.png', format='png', dpi=300)
+    
+    return
 
 def main():
     current_dir = os.getcwd()
