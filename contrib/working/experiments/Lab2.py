@@ -226,7 +226,7 @@ def P2a(results_dir, run=True):
     for mcs2 in mcs2s:
         for l in lambdas:
             command = (f'./ns3 run "single-bss-mld --rngRun={rng_run} '
-            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l}'
+            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l} '
             f'--mcs={mcs} --mcs2={mcs2}"')
             print(f'Executing Command: {command}')
 
@@ -297,7 +297,7 @@ def P2b(results_dir, run=True):
     for channel_width2 in channel_width2s:
         for l in lambdas:
             command = (f'./ns3 run "single-bss-mld --rngRun={rng_run} '
-            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l}'
+            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l} '
             f'--channelWidth={channel_width} --channelWidth2={channel_width2}"')
             print(f'Executing Command: {command}')
 
@@ -370,7 +370,7 @@ def P3a(results_dir, run=True):
     for mcs2 in mcs2s:
         for mld_probL1 in mld_probL1s:
             command = (f'./ns3 run "single-bss-mld --rngRun={rng_run} '
-            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l}'
+            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l} '
             f'--mcs={mcs} --mcs2={mcs2} --mldProbLink1={mld_probL1}"')
             print(f'Executing Command: {command}')
 
@@ -442,7 +442,7 @@ def P3b(results_dir, run=True):
     for channel_width2 in channel_width2s:
         for mld_probL1 in mld_probL1s:
             command = (f'./ns3 run "single-bss-mld --rngRun={rng_run} '
-            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l}'
+            f'--payloadSize={payload_size} --nMldSta={n_sta} --mldPerNodeLambda={l} '
             f'--channelWidth={channel_width} --channelWidth2={channel_width2} --mldProbLink1={mld_probL1}"')
             print(f'Executing Command: {command}')
 
@@ -499,7 +499,7 @@ def main():
         return
 
     #Select Experiment to run
-    experiment = input("Select Experiment (P1a\P1b\ALL)")
+    experiment = input("Select Experiment (P1a\P1b\P2a\P2b\P3a\P3b\ALL)")
 
     #Confirm that it's okay to delete existing log files
     dat_confirmation = input("Remove wifi-mld.dat from TLD? (y/n)")
@@ -518,11 +518,17 @@ def main():
         P2a(results_dir)
     elif(experiment == "P2b"):
         P2b(results_dir)
+    elif(experiment == "P3a"):
+        P3a(results_dir)
+    elif(experiment == "P3b"):
+        P3b(results_dir)
     elif(experiment == "ALL"):
-        # P1a(results_dir)
-        # P1b(results_dir)
+        P1a(results_dir)
+        P1b(results_dir)
         P2a(results_dir)
         P2b(results_dir)
+        P3a(results_dir)
+        P3b(results_dir)
     else:
         os.system("echo 'Invalid experiment selection'")
         os.system("echo 'Program terminated'")
