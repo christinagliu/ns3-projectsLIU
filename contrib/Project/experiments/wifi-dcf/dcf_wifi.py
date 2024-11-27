@@ -1,10 +1,18 @@
 import os
 import subprocess
 import shutil
+import subprocess
+import multiprocessing
 import signal
 import sys
 from datetime import datetime
 import matplotlib.pyplot as plt
+
+def runNs3Cmd(cmd):
+    proc = subprocess.Popen(cmd, shell=True)
+    proc.wait()
+    print(f'Completed Command: {cmd}')
+    return
 
 def control_c(signum, frame):
     print("exiting")
@@ -39,29 +47,40 @@ def main():
     max_lambda = -1
     step_size = 1
     lambdas = []
+
+    processes = []
     # Run the ns3 simulation for each distance
     for lam in range(min_lambda, max_lambda + 1, step_size):
         lambda_val = 10 ** lam
         lambdas.append(lambda_val)
         cmd = f"./ns3 run 'single-bss-sld --rngRun={rng_run} --payloadSize={max_packets} --perSldLambda={lambda_val}'"
         print(f'Running {cmd}')
-        subprocess.run(cmd, shell=True)
+        # subprocess.run(cmd, shell=True)
+
+        p = multiprocessing.Process(target=runNs3Cmd, args=(cmd,))
+        p.start()
+        processes.append(p)
+
+        #os.system(min_command)
+    #Synchronize threads
+    for p in processes:
+        p.join()
 
     # draw plots
-    plt.figure()
-    plt.title('Throughput vs. Offered Load')
-    plt.xlabel('Offered Load')
-    plt.ylabel('Throughput (Mbps)')
-    plt.grid()
-    plt.xscale('log')
-    throughput = []
-    with open('wifi-dcf.dat', 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            tokens = line.split(',')
-            throughput.append(float(tokens[1]))
-    plt.plot(lambdas, throughput, marker='o')
-    plt.savefig(os.path.join(results_dir, 'wifi-dcf.png'))
+    # plt.figure()
+    # plt.title('Throughput vs. Offered Load')
+    # plt.xlabel('Offered Load')
+    # plt.ylabel('Throughput (Mbps)')
+    # plt.grid()
+    # plt.xscale('log')
+    # throughput = []
+    # with open('wifi-dcf.dat', 'r') as f:
+    #     lines = f.readlines()
+    #     for line in lines:
+    #         tokens = line.split(',')
+    #         throughput.append(float(tokens[1]))
+    # plt.plot(lambdas, throughput, marker='o')
+    # plt.savefig(os.path.join(results_dir, 'wifi-dcf.png'))
     # Move result files to the experiment directory
     move_file('wifi-dcf.dat', results_dir)
 
