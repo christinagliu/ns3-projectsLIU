@@ -14,6 +14,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
+ *
+ * Edited by Christina Liu
+ * EE 595 Final Project
  */
 
 #include "ns3/attribute-container.h"
@@ -142,7 +145,10 @@ main(int argc, char* argv[])
     // SLD STAs parameters
     std::size_t nSld{5};
     double perSldLambda{0.00001};
-    uint8_t sldAcInt{AC_BE}; // Access Category
+    uint8_t sldAcInt1{AC_BE}; // Access Category 1 -- Best Effort
+    uint8_t sldAcInt2{AC_BK}; // Access Category 2 -- Background
+    uint8_t sldAcInt3{AC_VI}; // Access Category 3 -- Video
+    uint8_t sldAcInt4{AC_VO}; // Access Category 4 -- Voice
 
     // EDCA configuration for CWmins, CWmaxs
     uint64_t acBECwmin{16};
@@ -167,18 +173,21 @@ main(int argc, char* argv[])
     // cmd.AddValue("sldAcInt", "AC of SLD", sldAcInt);
     cmd.AddValue("acBECwmin", "Initial CW for AC_BE", acBECwmin);
     cmd.AddValue("acBECwStage", "Cutoff Stage for AC_BE", acBECwStage);
-    // cmd.AddValue("acBKCwmin", "Initial CW for AC_BK", acBKCwmin);
-    // cmd.AddValue("acBKCwStage", "Cutoff Stage for AC_BK", acBKCwStage);
-    // cmd.AddValue("acVICwmin", "Initial CW for AC_VI", acVICwmin);
-    // cmd.AddValue("acVICwStage", "Cutoff Stage for AC_VI", acVICwStage);
-    // cmd.AddValue("acVOCwmin", "Initial CW for AC_VO", acVOCwmin);
-    // cmd.AddValue("acVOCwStage", "Cutoff Stage for AC_VO", acVOCwStage);
+    cmd.AddValue("acBKCwmin", "Initial CW for AC_BK", acBKCwmin);
+    cmd.AddValue("acBKCwStage", "Cutoff Stage for AC_BK", acBKCwStage);
+    cmd.AddValue("acVICwmin", "Initial CW for AC_VI", acVICwmin);
+    cmd.AddValue("acVICwStage", "Cutoff Stage for AC_VI", acVICwStage);
+    cmd.AddValue("acVOCwmin", "Initial CW for AC_VO", acVOCwmin);
+    cmd.AddValue("acVOCwStage", "Cutoff Stage for AC_VO", acVOCwStage);
     cmd.Parse(argc, argv);
 
     RngSeedManager::SetSeed(rngRun);
     RngSeedManager::SetRun(rngRun);
     uint32_t randomStream = rngRun;
-    auto sldAc = static_cast<AcIndex>(sldAcInt);
+    auto sldAc_BE = static_cast<AcIndex>(sldAcInt1);
+    auto sldAc_BK = static_cast<AcIndex>(sldAcInt2);
+    auto sldAc_VI = static_cast<AcIndex>(sldAcInt3);
+    auto sldAc_VO = static_cast<AcIndex>(sldAcInt4);
 
     uint64_t acBECwmax = acBECwmin * pow(2, acBECwStage);
     acBECwmax -= 1;
@@ -395,11 +404,21 @@ main(int argc, char* argv[])
     // set the configuration pairs for applications (UL, Bernoulli arrival)
     TrafficConfigMap trafficConfigMap;
     double sldDetermIntervalNs = slotTime.GetNanoSeconds() / perSldLambda;
-    for (uint32_t i = 0; i < nSld; ++i)
-    {
-        trafficConfigMap[i] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc,
-                               perSldLambda, sldDetermIntervalNs};
-    }
+    // for (uint32_t i = 0; i < nSld; ++i)
+    // {
+    //     trafficConfigMap[i] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc,
+    //                            perSldLambda, sldDetermIntervalNs};
+    // }
+    trafficConfigMap[0] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+                                perSldLambda, sldDetermIntervalNs};
+    trafficConfigMap[1] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+                                perSldLambda, sldDetermIntervalNs};
+    trafficConfigMap[2] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+                                perSldLambda, sldDetermIntervalNs};
+    trafficConfigMap[3] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+                                perSldLambda, sldDetermIntervalNs};
+    trafficConfigMap[4] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+                                perSldLambda, sldDetermIntervalNs};
 
     // next, setup clients according to the config
     for (uint32_t i = 0; i < nSld; ++i)
@@ -602,7 +621,7 @@ main(int argc, char* argv[])
             << channelWidth << ","
             << nSld << ","
             << perSldLambda << ","
-            << +sldAcInt << ","
+            << +sldAcInt1 << ","
             << acBECwmin << ","
             << +acBECwStage << "\n";
     }
