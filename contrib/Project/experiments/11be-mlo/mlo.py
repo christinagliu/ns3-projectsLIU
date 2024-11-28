@@ -1,10 +1,19 @@
 import os
 import subprocess
+import numpy as np
+import subprocess
+import multiprocessing
 import shutil
 import signal
 import sys
 from datetime import datetime
 import matplotlib.pyplot as plt
+
+def runNs3Cmd(cmd):
+    proc = subprocess.Popen(cmd, shell=True)
+    proc.wait()
+    print(f'Completed Command: {cmd}')
+    return
 
 def control_c(signum, frame):
     print("exiting")
@@ -35,38 +44,53 @@ def main():
     # Experiment parameters
     rng_run = 1
     max_packets = 1500
-    min_lambda = -5
-    max_lambda = -2
-    step_size = 1
+    min_lambda = -6
+    max_lambda = -1
+    step_size = .5
     lambdas = []
+
     # Run the ns3 simulation for each distance
-    for lam in range(min_lambda, max_lambda + 1, step_size):
+    # for lam in range(min_lambda, max_lambda + 1, step_size):
+    #     lambda_val = 10 ** lam
+    #     lambdas.append(lambda_val)
+    #     cmd = f"./ns3 run 'single-bss-mld --rngRun={rng_run} --payloadSize={max_packets} --mldPerNodeLambda={lambda_val}'"
+    #     subprocess.run(cmd, shell=True)
+    processes = []
+    for lam in np.arange(min_lambda, max_lambda + step_size, step_size):
         lambda_val = 10 ** lam
         lambdas.append(lambda_val)
         cmd = f"./ns3 run 'single-bss-mld --rngRun={rng_run} --payloadSize={max_packets} --mldPerNodeLambda={lambda_val}'"
-        subprocess.run(cmd, shell=True)
+        print(f'Executing Command: {cmd}')
 
+        p = multiprocessing.Process(target=runNs3Cmd, args=(cmd,))
+        p.start()
+        processes.append(p)
+
+        #os.system(min_command)
+    #Synchronize threads
+    for p in processes:
+        p.join()
     # draw plots
-    plt.figure()
-    plt.title('Throughput vs. Offered Load')
-    plt.xlabel('Offered Load')
-    plt.ylabel('Throughput (Mbps)')
-    plt.grid()
-    plt.xscale('log')
-    throughput_l1 = []
-    throughput_l2 = []
-    throughput_total = []
-    with open('wifi-mld.dat', 'r') as f:
-        lines = f.readlines()
-        for line in lines:
-            tokens = line.split(',')
-            throughput_l1.append(float(tokens[3]))
-            throughput_l2.append(float(tokens[4]))
-            throughput_total.append(float(tokens[5]))
-    plt.plot(lambdas, throughput_l1, marker='o')
-    plt.plot(lambdas, throughput_l2, marker='x')
-    plt.plot(lambdas, throughput_total, marker='^')
-    plt.savefig(os.path.join(results_dir, 'wifi-mld.png'))
+    # plt.figure()
+    # plt.title('Throughput vs. Offered Load')
+    # plt.xlabel('Offered Load')
+    # plt.ylabel('Throughput (Mbps)')
+    # plt.grid()
+    # plt.xscale('log')
+    # throughput_l1 = []
+    # throughput_l2 = []
+    # throughput_total = []
+    # with open('wifi-mld.dat', 'r') as f:
+    #     lines = f.readlines()
+    #     for line in lines:
+    #         tokens = line.split(',')
+    #         throughput_l1.append(float(tokens[3]))
+    #         throughput_l2.append(float(tokens[4]))
+    #         throughput_total.append(float(tokens[5]))
+    # plt.plot(lambdas, throughput_l1, marker='o')
+    # plt.plot(lambdas, throughput_l2, marker='x')
+    # plt.plot(lambdas, throughput_total, marker='^')
+    # plt.savefig(os.path.join(results_dir, 'wifi-mld.png'))
     # Move result files to the experiment directory
     move_file('wifi-mld.dat', results_dir)
 
