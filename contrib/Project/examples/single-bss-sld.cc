@@ -145,10 +145,10 @@ main(int argc, char* argv[])
     // SLD STAs parameters
     std::size_t nSld{5};
     double perSldLambda{0.00001};
-    uint8_t sldAcInt1{AC_BE}; // Access Category 1 -- Best Effort
-    uint8_t sldAcInt2{AC_BK}; // Access Category 2 -- Background
-    uint8_t sldAcInt3{AC_VI}; // Access Category 3 -- Video
-    uint8_t sldAcInt4{AC_VO}; // Access Category 4 -- Voice
+    // uint8_t sldAcInt1{AC_BE}; // Access Category 1 -- Best Effort
+    // uint8_t sldAcInt2{AC_BK}; // Access Category 2 -- Background
+    // uint8_t sldAcInt3{AC_VI}; // Access Category 3 -- Video
+    // uint8_t sldAcInt4{AC_VO}; // Access Category 4 -- Voice
 
     // EDCA configuration for CWmins, CWmaxs
     uint64_t acBECwmin{16};
@@ -159,6 +159,8 @@ main(int argc, char* argv[])
     uint8_t acVICwStage{6};
     uint64_t acVOCwmin{16};
     uint8_t acVOCwStage{6};
+
+    std::string nodeAcsStr;
 
     CommandLine cmd(__FILE__);
     cmd.AddValue("rngRun", "Seed for simulation", rngRun);
@@ -179,15 +181,97 @@ main(int argc, char* argv[])
     cmd.AddValue("acVICwStage", "Cutoff Stage for AC_VI", acVICwStage);
     cmd.AddValue("acVOCwmin", "Initial CW for AC_VO", acVOCwmin);
     cmd.AddValue("acVOCwStage", "Cutoff Stage for AC_VO", acVOCwStage);
+    cmd.AddValue("nodeAcs", "Comma-separated ACs for nodes (0=BE, 1=BK, 2=VI, 3=VO)", nodeAcsStr);
     cmd.Parse(argc, argv);
 
     RngSeedManager::SetSeed(rngRun);
     RngSeedManager::SetRun(rngRun);
     uint32_t randomStream = rngRun;
-    auto sldAc_BE = static_cast<AcIndex>(sldAcInt1);
-    auto sldAc_BK = static_cast<AcIndex>(sldAcInt2);
-    auto sldAc_VI = static_cast<AcIndex>(sldAcInt3);
-    auto sldAc_VO = static_cast<AcIndex>(sldAcInt4);
+    // auto sldAc_BE = static_cast<AcIndex>(sldAcInt1);
+    // auto sldAc_BK = static_cast<AcIndex>(sldAcInt2);
+    // auto sldAc_VI = static_cast<AcIndex>(sldAcInt3);
+    // auto sldAc_VO = static_cast<AcIndex>(sldAcInt4);
+    // Default Access Category assignment
+    // std::map<uint32_t, AcIndex> nodeToAcMap;
+    // if (!nodeAcs.empty())
+    // {
+    //     for (uint32_t i = 0; i < nSld && i < nodeAcs.size(); ++i)
+    //     {
+    //         nodeToAcMap[i] = static_cast<AcIndex>(nodeAcs[i]);
+    //     }
+    // }
+    // else
+    // {
+    //     nodeToAcMap[0] = AC_BE;
+    //     nodeToAcMap[1] = AC_BE;
+    //     nodeToAcMap[2] = AC_BE;
+    //     nodeToAcMap[3] = AC_BE;
+    //     nodeToAcMap[4] = AC_BE;
+    // }
+
+    // std::vector<uint8_t> nodeAcs;
+    // std::stringstream ss(nodeAcsStr);
+    // uint8_t ac;
+    // while (ss >> ac)
+    // {
+    //     nodeAcs.push_back(ac);
+    //     if (ss.peek() == ',')
+    //     {
+    //         ss.ignore();
+    //     }
+    // }
+    // // If nodeAcs is empty, assign default values
+    // if (nodeAcs.empty())
+    // {
+    //     nodeAcs = {0, 0, 0, 0, 0}; // Default to AC_BE for all nodes
+    // }
+    // // Ensure nodeAcs matches nSld
+    // if (nodeAcs.size() < nSld)
+    // {
+    //     nodeAcs.resize(nSld, 0); // Extend with AC_BE
+    // }
+    // else if (nodeAcs.size() > nSld)
+    // {
+    //     nodeAcs.resize(nSld); // Truncate to match nSld
+    // }
+
+    std::vector<uint8_t> nodeAcs;
+    // Debug: Print the raw input string
+    NS_LOG_UNCOND("Raw nodeAcsStr: " << nodeAcsStr);
+
+    std::stringstream ss(nodeAcsStr);
+    int ac;
+    while (ss >> ac)
+    {
+        if (ac < 0 || ac > 3) // Validate AC values
+        {
+            NS_LOG_ERROR("Invalid Access Category (AC): " << ac);
+            return 1; // Terminate simulation with error
+        }
+        nodeAcs.push_back(static_cast<uint8_t>(ac));
+        if (ss.peek() == ',')
+        {
+            ss.ignore();
+        }
+    }
+
+    // Debug: Print parsed ACs
+    for (size_t i = 0; i < nodeAcs.size(); ++i)
+    {
+        NS_LOG_UNCOND("nodeAcs[" << i << "] = " << static_cast<int>(nodeAcs[i]));
+    }
+
+    // Fallback to default if no ACs are provided
+    if (nodeAcs.empty())
+    {
+        NS_LOG_UNCOND("No ACs provided. Defaulting to AC_BE for all nodes.");
+        nodeAcs = std::vector<uint8_t>(nSld, 0); // Default to AC_BE
+    }
+
+    std::map<uint32_t, AcIndex> nodeToAcMap;
+    for (uint32_t i = 0; i < nSld; ++i) {
+        nodeToAcMap[i] = static_cast<AcIndex>(nodeAcs[i]);
+    }
 
     uint64_t acBECwmax = acBECwmin * pow(2, acBECwStage);
     acBECwmax -= 1;
@@ -409,16 +493,26 @@ main(int argc, char* argv[])
     //     trafficConfigMap[i] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc,
     //                            perSldLambda, sldDetermIntervalNs};
     // }
-    trafficConfigMap[0] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
-                                perSldLambda, sldDetermIntervalNs};
-    trafficConfigMap[1] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
-                                perSldLambda, sldDetermIntervalNs};
-    trafficConfigMap[2] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
-                                perSldLambda, sldDetermIntervalNs};
-    trafficConfigMap[3] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
-                                perSldLambda, sldDetermIntervalNs};
-    trafficConfigMap[4] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
-                                perSldLambda, sldDetermIntervalNs};
+    // trafficConfigMap[0] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+    //                             perSldLambda, sldDetermIntervalNs};
+    // trafficConfigMap[1] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+    //                             perSldLambda, sldDetermIntervalNs};
+    // trafficConfigMap[2] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+    //                             perSldLambda, sldDetermIntervalNs};
+    // trafficConfigMap[3] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+    //                             perSldLambda, sldDetermIntervalNs};
+    // trafficConfigMap[4] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
+    //                             perSldLambda, sldDetermIntervalNs};
+    for (uint32_t i = 0; i < nSld; ++i)
+    {
+        TrafficConfig config;
+        config.m_dir = WifiDirection::UPLINK; // Default direction
+        config.m_type = TRAFFIC_BERNOULLI;    // Default traffic type
+        config.m_linkAc = nodeToAcMap[i];     // Assign AC dynamically
+        config.m_lambda = perSldLambda;
+        config.m_determIntervalNs = sldDetermIntervalNs;
+        trafficConfigMap[i] = config;
+    }
 
     // next, setup clients according to the config
     for (uint32_t i = 0; i < nSld; ++i)
@@ -621,7 +715,7 @@ main(int argc, char* argv[])
             << channelWidth << ","
             << nSld << ","
             << perSldLambda << ","
-            << +sldAcInt1 << ","
+            // << +sldAcInt1 << ","
             << acBECwmin << ","
             << +acBECwStage << "\n";
     }
