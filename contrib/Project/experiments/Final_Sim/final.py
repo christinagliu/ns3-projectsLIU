@@ -54,7 +54,7 @@ def main():
     os.chdir('../../../../')
     
     # Check for existing data files and prompt for removal
-    check_and_remove('wifi-mld.dat')
+    check_and_remove('wifi-dcf.dat')
 
     # Experiment parameters
     rng_run = 1
@@ -102,7 +102,7 @@ def main():
     # plt.plot(lambdas, throughput_total, marker='^')
     # plt.savefig(os.path.join(results_dir, 'wifi-mld.png'))
     # Move result files to the experiment directory
-    move_file('wifi-mld.dat', results_dir)
+    move_file('wifi-dcf.dat', results_dir)
 
 
     # Save the git commit information
