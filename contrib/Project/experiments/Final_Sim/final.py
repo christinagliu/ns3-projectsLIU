@@ -64,18 +64,21 @@ def main():
     step_size = .5
     lambdas = []
 
+    node_acs = [1, 1, 1, 1, 1]  # Different ACs for each node
+
+    # Convert lists to string (Problem with ns3, only want stringed lists)
+    node_acs_str = ','.join(map(str, node_acs))
+
     processes = []
     for lam in np.arange(min_lambda, max_lambda + step_size, step_size):
         lambda_val = 10 ** lam
         lambdas.append(lambda_val)
-        cmd = f"./ns3 run 'single-bss-sld --rngRun={rng_run} --payloadSize={max_packets} --perSldLambda={lambda_val}'"
+        cmd = f"./ns3 run 'single-bss-sld --rngRun={rng_run} --payloadSize={max_packets} --perSldLambda={lambda_val}, --nodeAcs={node_acs_str}'"
         print(f'Executing Command: {cmd}')
 
         p = multiprocessing.Process(target=runNs3Cmd, args=(cmd,))
         p.start()
         processes.append(p)
-
-        #os.system(min_command)
         
     #Synchronize threads
     for p in processes:
@@ -103,12 +106,6 @@ def main():
     # plt.savefig(os.path.join(results_dir, 'wifi-mld.png'))
     # Move result files to the experiment directory
     move_file('wifi-dcf.dat', results_dir)
-
-
-    # Save the git commit information
-    # with open(os.path.join(results_dir, 'git-commit.txt'), 'w') as f:
-    #     commit_info = subprocess.run(['git', 'show', '--name-only'], stdout=subprocess.PIPE)
-    #     f.write(commit_info.stdout.decode())
 
     
 def check_and_remove(filename):
