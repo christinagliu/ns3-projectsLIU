@@ -64,7 +64,7 @@ def main():
     step_size = .5
     lambdas = []
 
-    node_acs = [0, 0, 0, 0, 0]  # Different ACs for each node
+    node_acs = [3, 3, 3, 3, 3]  # Different ACs for each node
 
     # Convert lists to string (Problem with ns3, only want stringed lists)
     node_acs_str = ','.join(map(str, node_acs))
