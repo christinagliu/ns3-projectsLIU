@@ -152,13 +152,13 @@ main(int argc, char* argv[])
 
     // EDCA configuration for CWmins, CWmaxs
     uint64_t acBECwmin{16};
-    uint8_t acBECwStage{6};
-    uint64_t acBKCwmin{16};
-    uint8_t acBKCwStage{6};
-    uint64_t acVICwmin{16};
-    uint8_t acVICwStage{6};
-    uint64_t acVOCwmin{16};
-    uint8_t acVOCwStage{6};
+    uint8_t acBECwStage{10};
+    uint64_t acBKCwmin{32};
+    uint8_t acBKCwStage{10};
+    uint64_t acVICwmin{8};
+    uint8_t acVICwStage{4};
+    uint64_t acVOCwmin{4};
+    uint8_t acVOCwStage{3};
 
     std::string nodeAcsStr;
 
