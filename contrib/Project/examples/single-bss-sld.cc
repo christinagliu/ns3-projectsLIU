@@ -129,6 +129,10 @@ main(int argc, char* argv[])
     uint32_t rngRun{6};
     double simulationTime{20}; // seconds
     uint32_t payloadSize = 1500;
+    uint32_t payloadBE = 1500;  // Best Effort
+    uint32_t payloadBK = 2000;  // Background
+    uint32_t payloadVI = 1200;  // Video
+    uint32_t payloadVO = 250;   // Voice
     double bssRadius{0.001};
     bool unlimitedAmpdu{false};
     uint8_t maxMpdusInAmpdu = 0;
@@ -145,20 +149,24 @@ main(int argc, char* argv[])
     // SLD STAs parameters
     std::size_t nSld{5};
     double perSldLambda{0.00001};
+    double lambdaBE{0.00001};
+    double lambdaBK{0.00002};
+    double lambdaVI{0.00005};
+    double lambdaVO{0.00010};
     // uint8_t sldAcInt1{AC_BE}; // Access Category 1 -- Best Effort
     // uint8_t sldAcInt2{AC_BK}; // Access Category 2 -- Background
     // uint8_t sldAcInt3{AC_VI}; // Access Category 3 -- Video
     // uint8_t sldAcInt4{AC_VO}; // Access Category 4 -- Voice
 
     // EDCA configuration for CWmins, CWmaxs
-    uint64_t acBECwmin{16};
-    uint8_t acBECwStage{10};
-    uint64_t acBKCwmin{32};
-    uint8_t acBKCwStage{10};
-    uint64_t acVICwmin{8};
-    uint8_t acVICwStage{4};
-    uint64_t acVOCwmin{4};
-    uint8_t acVOCwStage{3};
+    uint64_t acBECwmin{15};
+    uint8_t acBECwStage{6};
+    uint64_t acBKCwmin{15};
+    uint8_t acBKCwStage{6};
+    uint64_t acVICwmin{7};
+    uint8_t acVICwStage{1};
+    uint64_t acVOCwmin{3};
+    uint8_t acVOCwStage{1};
 
     std::string nodeAcsStr;
 
@@ -166,12 +174,20 @@ main(int argc, char* argv[])
     cmd.AddValue("rngRun", "Seed for simulation", rngRun);
     cmd.AddValue("simulationTime", "Simulation time in seconds", simulationTime);
     cmd.AddValue("payloadSize", "Application payload size in Bytes", payloadSize);
+    cmd.AddValue("payloadBE", "Payload size for Best Effort (BE)", payloadBE);
+    cmd.AddValue("payloadBK", "Payload size for Background (BK)", payloadBK);
+    cmd.AddValue("payloadVI", "Payload size for Video (VI)", payloadVI);
+    cmd.AddValue("payloadVO", "Payload size for Voice (VO)", payloadVO);
     cmd.AddValue("mcs", "MCS", mcs);
     cmd.AddValue("channelWidth", "Bandwidth", channelWidth);
     cmd.AddValue("nSld", "Number of SLD STAs on link 1", nSld);
     cmd.AddValue("perSldLambda",
                  "Per node Bernoulli arrival rate of SLD STAs",
                  perSldLambda);
+    cmd.AddValue("lambdaBE", "Traffic arrival rate (lambda) for Best Effort (BE)", lambdaBE);
+    cmd.AddValue("lambdaBK", "Traffic arrival rate (lambda) for Background (BK)", lambdaBK);
+    cmd.AddValue("lambdaVI", "Traffic arrival rate (lambda) for Video (VI)", lambdaVI);
+    cmd.AddValue("lambdaVO", "Traffic arrival rate (lambda) for Voice (VO)", lambdaVO);
     // cmd.AddValue("sldAcInt", "AC of SLD", sldAcInt);
     cmd.AddValue("acBECwmin", "Initial CW for AC_BE", acBECwmin);
     cmd.AddValue("acBECwStage", "Cutoff Stage for AC_BE", acBECwStage);
@@ -439,8 +455,8 @@ main(int argc, char* argv[])
     // Set all TXOP limit to 0
     std::list<Time> txopLimitsBE = {MicroSeconds(0)};
     std::list<Time> txopLimitsBK = {MicroSeconds(0)};
-    std::list<Time> txopLimitsVI = {MicroSeconds(3000)};
-    std::list<Time> txopLimitsVO = {MicroSeconds(1500)};
+    std::list<Time> txopLimitsVI = {MicroSeconds(3200)};
+    std::list<Time> txopLimitsVO = {MicroSeconds(1504)};
     Config::Set(prefixStr + "BE_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsBE));
     Config::Set(prefixStr + "BK_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsBK));
     Config::Set(prefixStr + "VI_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsVI));
@@ -515,6 +531,7 @@ main(int argc, char* argv[])
         config.m_dir = WifiDirection::UPLINK; // Default direction
         config.m_type = TRAFFIC_BERNOULLI;    // Default traffic type
         config.m_linkAc = nodeToAcMap[i];     // Assign AC dynamically
+
         config.m_lambda = perSldLambda;
         config.m_determIntervalNs = sldDetermIntervalNs;
         trafficConfigMap[i] = config;
