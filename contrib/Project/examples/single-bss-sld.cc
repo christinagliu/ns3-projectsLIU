@@ -427,18 +427,24 @@ main(int argc, char* argv[])
     Config::Set(prefixStr + "VO_Txop/MaxCws", AttributeContainerValue<UintegerValue>(acVoCwmaxs));
 
     // Set all aifsn to 2 (so that all AIFS equal to legacy DIFS)
-    std::list<uint64_t> aifsns = {2};
-    Config::Set(prefixStr + "BE_Txop/Aifsns", AttributeContainerValue<UintegerValue>(aifsns));
-    Config::Set(prefixStr + "BK_Txop/Aifsns", AttributeContainerValue<UintegerValue>(aifsns));
-    Config::Set(prefixStr + "VI_Txop/Aifsns", AttributeContainerValue<UintegerValue>(aifsns));
-    Config::Set(prefixStr + "VO_Txop/Aifsns", AttributeContainerValue<UintegerValue>(aifsns));
+    std::list<uint64_t> aifsnsBE = {3};
+    std::list<uint64_t> aifsnsBK = {7};
+    std::list<uint64_t> aifsnsVI = {2};
+    std::list<uint64_t> aifsnsVO = {2};
+    Config::Set(prefixStr + "BE_Txop/Aifsns", AttributeContainerValue<UintegerValue>(aifsnsBE));
+    Config::Set(prefixStr + "BK_Txop/Aifsns", AttributeContainerValue<UintegerValue>(aifsnsBK));
+    Config::Set(prefixStr + "VI_Txop/Aifsns", AttributeContainerValue<UintegerValue>(aifsnsVI));
+    Config::Set(prefixStr + "VO_Txop/Aifsns", AttributeContainerValue<UintegerValue>(aifsnsVO));
 
     // Set all TXOP limit to 0
-    std::list<Time> txopLimits = {MicroSeconds(0)};
-    Config::Set(prefixStr + "BE_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimits));
-    Config::Set(prefixStr + "BK_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimits));
-    Config::Set(prefixStr + "VI_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimits));
-    Config::Set(prefixStr + "VO_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimits));
+    std::list<Time> txopLimitsBE = {MicroSeconds(0)};
+    std::list<Time> txopLimitsBK = {MicroSeconds(0)};
+    std::list<Time> txopLimitsVI = {MicroSeconds(3000)};
+    std::list<Time> txopLimitsVO = {MicroSeconds(1500)};
+    Config::Set(prefixStr + "BE_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsBE));
+    Config::Set(prefixStr + "BK_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsBK));
+    Config::Set(prefixStr + "VI_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsVI));
+    Config::Set(prefixStr + "VO_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsVO));
 
     auto staWifiManager =
         DynamicCast<ConstantRateWifiManager>(DynamicCast<WifiNetDevice>(staDevCon.Get(0))
