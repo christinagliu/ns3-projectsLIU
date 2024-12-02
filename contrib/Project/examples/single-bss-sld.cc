@@ -455,8 +455,8 @@ main(int argc, char* argv[])
     // Set all TXOP limit to 0
     std::list<Time> txopLimitsBE = {MicroSeconds(0)};
     std::list<Time> txopLimitsBK = {MicroSeconds(0)};
-    std::list<Time> txopLimitsVI = {MicroSeconds(3200)};
-    std::list<Time> txopLimitsVO = {MicroSeconds(3200)};
+    std::list<Time> txopLimitsVI = {MicroSeconds(3008)};
+    std::list<Time> txopLimitsVO = {MicroSeconds(1504)};
     Config::Set(prefixStr + "BE_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsBE));
     Config::Set(prefixStr + "BK_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsBK));
     Config::Set(prefixStr + "VI_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsVI));
@@ -723,6 +723,34 @@ main(int argc, char* argv[])
     double sldMeanAccDelay = sldAccDelayTotal / numSldSuccess;
 
     double sldMeanE2eDelay = sldMeanQueDelay + sldMeanAccDelay;
+    
+    // Calculate throughput and delay 
+    for (uint32_t i = 1; i < 1 + nSld; ++i) {
+        uint64_t numSuccessPerNode = 0;
+        for (const auto& records : successInfo[i]) {
+            numSuccessPerNode += records.second.size();
+        }
+        double nodeThpt = static_cast<long double>(numSuccessPerNode) * payloadSize * 8 / simulationTime / 1000000;
+
+        double nodeTotalQueDelay = 0;
+        double nodeTotalAccDelay = 0;
+        for (const auto& item : totalQueuingDelayPerNodeLink[i]) {
+            nodeTotalQueDelay += item.second;
+        }
+        for (const auto& item : totalAccessDelayPerNodeLink[i]) {
+            nodeTotalAccDelay += item.second;
+        }
+
+        double nodeMeanQueDelay = numSuccessPerNode > 0 ? nodeTotalQueDelay / numSuccessPerNode : 0;
+        double nodeMeanAccDelay = numSuccessPerNode > 0 ? nodeTotalAccDelay / numSuccessPerNode : 0;
+        double nodeMeanE2eDelay = nodeMeanQueDelay + nodeMeanAccDelay;
+
+        g_fileSummary << i << "," // Node ID
+                    << nodeThpt << ","
+                    << nodeMeanQueDelay << ","
+                    << nodeMeanAccDelay << ","
+                    << nodeMeanE2eDelay << "\n";
+    }
 
     if (printTxStatsSingleLine)
     {
