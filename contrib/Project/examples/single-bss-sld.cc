@@ -455,7 +455,7 @@ main(int argc, char* argv[])
     // Set all TXOP limit to 0
     std::list<Time> txopLimitsBE = {MicroSeconds(0)};
     std::list<Time> txopLimitsBK = {MicroSeconds(0)};
-    std::list<Time> txopLimitsVI = {MicroSeconds(3200)};
+    std::list<Time> txopLimitsVI = {MicroSeconds(1504)};
     std::list<Time> txopLimitsVO = {MicroSeconds(3200)};
     Config::Set(prefixStr + "BE_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsBE));
     Config::Set(prefixStr + "BK_Txop/TxopLimits", AttributeContainerValue<TimeValue>(txopLimitsBK));
