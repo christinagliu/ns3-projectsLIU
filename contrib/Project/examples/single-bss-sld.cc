@@ -127,10 +127,10 @@ main(int argc, char* argv[])
     bool printTxStatsSingleLine{true};
 
     uint32_t rngRun{6};
-    double simulationTime{20}; // seconds
+    double simulationTime{60}; // seconds
     uint32_t payloadSize = 1500;
     uint32_t payloadBE = 1500;  // Best Effort
-    uint32_t payloadBK = 2000;  // Background
+    uint32_t payloadBK = 1500;  // Background
     uint32_t payloadVI = 1200;  // Video
     uint32_t payloadVO = 250;   // Voice
     double bssRadius{0.001};
@@ -413,13 +413,13 @@ main(int argc, char* argv[])
     if (!unlimitedAmpdu)
     {
         Config::Set("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/BE_MaxAmpduSize",
-                    UintegerValue(maxMpdusInAmpdu * (payloadSize + 50)));
+                    UintegerValue(maxMpdusInAmpdu * (payloadBE + 50)));
         Config::Set("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/BK_MaxAmpduSize",
-                    UintegerValue(maxMpdusInAmpdu * (payloadSize + 50)));
+                    UintegerValue(maxMpdusInAmpdu * (payloadBK + 50)));
         Config::Set("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/VO_MaxAmpduSize",
-                    UintegerValue(maxMpdusInAmpdu * (payloadSize + 50)));
+                    UintegerValue(maxMpdusInAmpdu * (payloadVO + 50)));
         Config::Set("/NodeList/*/DeviceList/*/$ns3::WifiNetDevice/Mac/VI_MaxAmpduSize",
-                    UintegerValue(maxMpdusInAmpdu * (payloadSize + 50)));
+                    UintegerValue(maxMpdusInAmpdu * (payloadVI + 50)));
     }
 
     // Set cwmins and cwmaxs for all Access Categories on both AP and STAs
@@ -525,12 +525,34 @@ main(int argc, char* argv[])
     //                             perSldLambda, sldDetermIntervalNs};
     // trafficConfigMap[4] = {WifiDirection::UPLINK, TRAFFIC_BERNOULLI, sldAc_BK,
     //                             perSldLambda, sldDetermIntervalNs};
+    // for (uint32_t i = 0; i < nSld; ++i)
+    // {
+    //     TrafficConfig config;
+    //     config.m_dir = WifiDirection::UPLINK; // Default direction
+    //     config.m_type = TRAFFIC_BERNOULLI;    // Default traffic type
+    //     config.m_linkAc = nodeToAcMap[i];     // Assign AC dynamically
+
+    //     config.m_lambda = perSldLambda;
+    //     config.m_determIntervalNs = sldDetermIntervalNs;
+    //     trafficConfigMap[i] = config;
+    // }
+
     for (uint32_t i = 0; i < nSld; ++i)
     {
         TrafficConfig config;
-        config.m_dir = WifiDirection::UPLINK; // Default direction
-        config.m_type = TRAFFIC_BERNOULLI;    // Default traffic type
-        config.m_linkAc = nodeToAcMap[i];     // Assign AC dynamically
+        config.m_dir = WifiDirection::UPLINK;
+        config.m_linkAc = nodeToAcMap[i];
+
+        // Change traffic type based on the AC
+        if (config.m_linkAc == AC_BE) {
+            config.m_type = TRAFFIC_BERNOULLI;
+        } else if (config.m_linkAc == AC_VI) {
+            config.m_type = TRAFFIC_DETERMINISTIC;
+        } else if (config.m_linkAc == AC_VO) {
+            config.m_type = TRAFFIC_DETERMINISTIC;
+        } else {
+            config.m_type = TRAFFIC_BERNOULLI; // Default
+        }
 
         config.m_lambda = perSldLambda;
         config.m_determIntervalNs = sldDetermIntervalNs;
@@ -549,6 +571,26 @@ main(int argc, char* argv[])
                                    ? apNodeCon.Get(0)
                                    : staNodeCon.Get(i);
         Ptr<WifiNetDevice> serverDevice = DynamicCast<WifiNetDevice>(serverNode->GetDevice(0));
+
+        uint32_t payloadSize = 0;
+
+        switch (mapIt->second.m_linkAc)
+        {
+        case AC_BE:
+            payloadSize = payloadBE;
+            break;
+        case AC_BK:
+            payloadSize = payloadBK;
+            break;
+        case AC_VI:
+            payloadSize = payloadVI;
+            break;
+        case AC_VO:
+            payloadSize = payloadVO;
+            break;
+        default:
+            payloadSize = payloadBE; // Default
+        }
 
         switch (mapIt->second.m_type)
         {

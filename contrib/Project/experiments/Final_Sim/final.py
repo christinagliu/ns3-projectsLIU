@@ -57,14 +57,15 @@ def main():
     check_and_remove('wifi-dcf.dat')
 
     # Experiment parameters
-    rng_run = 1
+    rng_run = 5
     max_packets = 1500
     min_lambda = -6
     max_lambda = -1
-    step_size = .5
+    step_size = .25
+    nNode = 7
     lambdas = []
 
-    node_acs = [3, 3, 3, 3, 3]  # Different ACs for each node
+    node_acs = [0, 0, 0, 0, 0, 3, 2]  # Different ACs for each node
 
     # Convert lists to string (Problem with ns3, only want stringed lists)
     node_acs_str = ','.join(map(str, node_acs))
@@ -73,7 +74,7 @@ def main():
     for lam in np.arange(min_lambda, max_lambda + step_size, step_size):
         lambda_val = 10 ** lam
         lambdas.append(lambda_val)
-        cmd = f"./ns3 run 'single-bss-sld --rngRun={rng_run} --payloadSize={max_packets} --perSldLambda={lambda_val}, --nodeAcs={node_acs_str}'"
+        cmd = f"./ns3 run 'single-bss-sld --rngRun={rng_run} --payloadSize={max_packets} --nSld={nNode} --perSldLambda={lambda_val} --nodeAcs={node_acs_str}'"
         print(f'Executing Command: {cmd}')
 
         p = multiprocessing.Process(target=runNs3Cmd, args=(cmd,))
